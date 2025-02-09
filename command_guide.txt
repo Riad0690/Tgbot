@@ -1,0 +1,131 @@
+🔥 Telegram Bot Custom Command Guide (Node.js + Telegraf)
+
+এই গাইড অনুসরণ করে তুমি সহজেই **Custom Command System** তৈরি করতে পারবে।
+
+===================================================
+
+📌 **1️⃣ Command Structure (কমান্ড ফাইলের ফরম্যাট)**
+
+প্রতিটি কমান্ড একটি **`.js` ফাইল** হিসেবে `commands/` ফোল্ডারে থাকবে।
+নিচে **একটি স্ট্যান্ডার্ড কমান্ড টেমপ্লেট** দেওয়া হলো:
+
+```js
+module.exports = {
+    name: 'command_name', // 🔹 কমান্ডের নাম (ex: 'userinfo')
+    aliases: ['alias1', 'alias2'], // 🔹 বিকল্প নামে কমান্ড চালানো যাবে
+    description: 'এখানে কমান্ডের বিবরণ দিন', // 🔹 কমান্ড কী কাজ করে
+    category: 'General', // 🔹 কমান্ডের ধরন (ex: 'Admin', 'User', 'Fun' etc)
+    version: '1.0', // 🔹 কমান্ডের সংস্করণ
+    author: 'Your Name', // 🔹 কমান্ড ডেভেলপার
+
+    execute: async (ctx) => {
+        // 🛠️ এখানে কমান্ডের কাজ লিখুন
+        ctx.reply('✅ এই কমান্ড কাজ করছে!');
+    }
+};
+```
+
+===================================================
+
+📌 **2️⃣ Bot.js-এ Command Loader যোগ করা**
+
+তুমি যদি **`bot.js`** ফাইলে নিচের কোড যোগ করো, তাহলে `commands/` ফোল্ডার থেকে সব কমান্ড **অটোমেটিক লোড** হবে:
+
+```js
+require('dotenv').config();
+const { Telegraf } = require('telegraf');
+const fs = require('fs');
+const path = require('path');
+const connectDB = require('./database');
+
+const bot = new Telegraf(process.env.BOT_TOKEN);
+
+// MongoDB Connection
+connectDB();
+
+// 🔄 Commands Load করা
+const commandsPath = path.join(__dirname, 'commands');
+fs.readdirSync(commandsPath).forEach((file) => {
+    if (file.endsWith('.js')) {
+        const command = require(`./commands/${file}`);
+        bot.command(command.name, command.execute);
+        console.log(`✅ Loaded Command: ${command.name}`);
+    }
+});
+
+bot.launch();
+console.log('🚀 Bot is running...');
+```
+
+===================================================
+
+📌 **3️⃣ Custom Command তৈরি করার উদাহরণ**
+
+### **🛠️ Example 1: `/ping` Command**
+
+👉 **`commands/ping.js`** ফাইল তৈরি করে নিচের কোড বসাও:
+
+```js
+module.exports = {
+    name: 'ping',
+    aliases: ['latency'],
+    description: 'Bot latency check',
+    category: 'General',
+    version: '1.0',
+    author: 'Your Name',
+
+    execute: async (ctx) => {
+        const start = Date.now();
+        await ctx.reply('🏓 Pinging...');
+        const end = Date.now();
+        ctx.reply(`✅ Pong! Latency: ${end - start}ms`);
+    }
+};
+```
+
+### **🛠️ Example 2: `/userinfo` Command (MongoDB সহ)**
+
+👉 **`commands/userinfo.js`** ফাইল তৈরি করো:
+
+```js
+const User = require('../models/User');
+
+module.exports = {
+    name: 'userinfo',
+    aliases: ['profile', 'me'],
+    description: 'Displays user information',
+    category: 'User',
+    version: '1.0',
+    author: 'Your Name',
+
+    execute: async (ctx) => {
+        const userId = ctx.message.from.id.toString();
+        let user = await User.findOne({ userId });
+
+        if (!user) {
+            return ctx.reply('❌ You are not registered! Use /start first.');
+        }
+
+        ctx.reply(`👤 **User Info:**
+🆔 ID: ${userId}
+💰 Coins: ${user.coins}
+⭐ XP: ${user.xp}
+📅 Joined: ${user.joinedAt}`);
+    }
+};
+```
+
+===================================================
+
+📌 **4️⃣ কিভাবে নতুন কমান্ড যোগ করবে?**
+
+👉 **ধাপে ধাপে নতুন কমান্ড যোগ করার নিয়ম:**  
+1️⃣ **`commands/` ফোল্ডারে একটি নতুন `.js` ফাইল তৈরি করো**  
+2️⃣ উপরের **Command Structure অনুসারে কোড লিখো**  
+3️⃣ **Bot রান করো (or restart করো)**  
+4️⃣ `/command_name` লিখে **পরীক্ষা করো**  
+
+===================================================
+
+✅ **এই গাইড অনুসরণ করে যেকোনো কমান্ড সহজেই তৈরি করতে পারবে! 🚀**
+
